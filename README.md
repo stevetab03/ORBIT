@@ -62,7 +62,7 @@ D = \begin{pmatrix} \sigma_F^2 & \rho\sigma_F\sigma_S \\ \rho\sigma_F\sigma_S & 
 **Theorem 1 (Variance Collapse).** Under the fast-slow regime
 $a(\tau) \gg b$, the basis variance satisfies:
 
-$$\sigma^2_e(\tau) = O\!\left(\frac{1}{a(\tau)}\right) + O\!\left(e^{-\int_0^t a(s)\,ds}\right) \to 0 \quad \text{as } \tau \to 0$$
+$$\sigma^2_e(\tau) = O\left(\frac{1}{a(\tau)}\right) + O\left(e^{-\int_0^t a(s)\,ds}\right) \to 0 \quad \text{as } \tau \to 0$$
 
 **Theorem 2 (Fast-Slow Approximation).** The basis is approximated
 by a time-inhomogeneous OU process with error:
