@@ -1,4 +1,4 @@
-# ORBIT: Oil-Basis Reversion with Bivariate Itô Theory
+# ORBIT: Oil-Basis Reversion with Bivariate Ito Theory
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Math: SDE & Lyapunov Theory](https://img.shields.io/badge/Math-SDE_%7C_Lyapunov_Theory-blueviolet)](https://github.com/hlzhang/orbit/blob/main)
@@ -37,11 +37,11 @@ As expiration approaches ($\tau \to 0$), $a(\tau) \to \infty$ — the futures pr
 
 ### Basis Process via Ito Product Rule
 
-Define the cointegrating parameter $\lambda(\tau) = a(\tau)/(a(\tau)+b)$ and the basis $e_t = F_t - \lambda(\tau) S_t$. Applying Itô's product rule with $d\tau = -dt$:
+Define the cointegrating parameter $\lambda(\tau) = a(\tau)/(a(\tau)+b)$ and the basis $e_t = F_t - \lambda(\tau) S_t$. Applying Ito's product rule with $d\tau = -dt$:
 
 $$de_t = \underbrace{-a(\tau) e_t\,dt}_{\text{directed pull}}
        + \underbrace{b\lambda(\tau)(\mu_S - S_t)\,dt}_{\text{slow spot drift}}
-       - \underbrace{S_t \lambda'(\tau)\,dt}_{\text{Itô correction}}
+       - \underbrace{S_t \lambda'(\tau)\,dt}_{\text{Ito correction}}
        + \sigma_{\text{eff}}(\tau)\,dB_t$$
 
 The Ito correction term $-S_t \lambda' dt$ arises from the time-dependence of $\lambda(\tau)$ and vanishes as $\tau \to 0$ (see Corollary 1 below).
@@ -56,13 +56,17 @@ $$\frac{dV}{dt} = A(\tau)V + VA(\tau)^\top + D$$
 
 where:
 
-$$A(\tau) = \begin{pmatrix} -a(\tau) & a(\tau) \\ 0 & -b \end{pmatrix}, \qquad
-D = \begin{pmatrix} \sigma_F^2 & \rho\sigma_F\sigma_S \\ \rho\sigma_F\sigma_S & \sigma_S^2 \end{pmatrix}$$
+```math
+A(\tau) = \begin{pmatrix} -a(\tau) & a(\tau) \\ 0 & -b \end{pmatrix}, \qquad
+D = \begin{pmatrix} \sigma_F^2 & \rho\sigma_F\sigma_S \\ \rho\sigma_F\sigma_S & \sigma_S^2 \end{pmatrix}
+```
 
 **Theorem 1 (Variance Collapse).** Under the fast-slow regime
 $a(\tau) \gg b$, the basis variance satisfies:
 
-$$\sigma^2_e(\tau) = O\left(\frac{1}{a(\tau)}\right) + O\left(e^{-\int_0^t a(s)\,ds}\right) \to 0 \quad \text{as } \tau \to 0$$
+```math
+\sigma_e^2(\tau) = O\left(\frac{1}{a(\tau)}\right) + O\left(e^{-\int_0^t a(s)\,ds}\right) \to 0 \quad \text{as } \tau \to 0
+```
 
 **Theorem 2 (Fast-Slow Approximation).** The basis is approximated
 by a time-inhomogeneous OU process with error:
