@@ -26,9 +26,6 @@ theoretical framework proves that basis variance must collapse to zero at expiry
 a rate governed by the integrated convergence speed. The mathematics and the economics
 are mutually consistent by construction.
 
-Full derivations, proofs, and theorem statements are documented in
-`theory/orbit_monograph.pdf`.
-
 ---
 
 ## What the Model Does
@@ -217,11 +214,10 @@ Neural SDE and LSTM agree with the classical framework, the theory is validated
 data-adaptively. Where they diverge, the parametric assumptions are exposed — which
 is more useful than pretending they are not there.
 
-Full mathematical treatment: `theory/orbit_monograph.pdf`.
-
 ---
 
 ## Contact
 
-**LinkedIn:** https://www.linkedin.com/in/hlzhang/
+**Monograph:** Available upon request for full derivations, proofs, and theorem statements.  
+**LinkedIn:** https://www.linkedin.com/in/hlzhang/  
 **GitHub:** https://github.com/stevetab03
