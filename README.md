@@ -6,7 +6,7 @@
 [![ML: Neural SDE · Bayesian Opt · LSTM](https://img.shields.io/badge/ML-Neural_SDE_%7C_Bayesian_Opt_%7C_LSTM-orange)](https://github.com/stevetab03/ORBIT)
 [![BI: Power BI](https://img.shields.io/badge/BI-Power_BI-yellow)](https://github.com/stevetab03/ORBIT)
 
-**Author:** Liyuan Zhang
+**Author:** Liyuan Zhang  
 **Status:** Active Research / Portfolio Showcase
 
 ---
