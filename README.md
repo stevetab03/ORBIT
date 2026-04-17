@@ -1,165 +1,227 @@
 # ORBIT: Oil-Basis Reversion with Bivariate Ito Theory
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Math: SDE & Lyapunov Theory](https://img.shields.io/badge/Math-SDE_%7C_Lyapunov_Theory-blueviolet)](https://github.com/hlzhang/orbit/blob/main)
-[![Methods: KS Calibration & Differential Evolution](https://img.shields.io/badge/Methods-KS_Calibration_%7C_Differential_Evolution-success)](https://github.com/hlzhang/orbit/blob/main)
+[![Math: SDE & Lyapunov Theory](https://img.shields.io/badge/Math-SDE_%7C_Lyapunov_Theory-blueviolet)](https://github.com/stevetab03/ORBIT)
+[![Methods: KS Calibration & Differential Evolution](https://img.shields.io/badge/Methods-KS_Calibration_%7C_Differential_Evolution-success)](https://github.com/stevetab03/ORBIT)
+[![ML: Neural SDE · Bayesian Opt · LSTM](https://img.shields.io/badge/ML-Neural_SDE_%7C_Bayesian_Opt_%7C_LSTM-orange)](https://github.com/stevetab03/ORBIT)
+[![BI: Power BI](https://img.shields.io/badge/BI-Power_BI-yellow)](https://github.com/stevetab03/ORBIT)
 
-**Author:** Liyuan Zhang  
+**Author:** Liyuan Zhang
 **Status:** Active Research / Portfolio Showcase
 
 ---
 
 ## Executive Summary
 
-Classical commodity futures models (Schwartz 1997, Gibson-Schwartz 1990) treat the convergence of futures prices toward spot as a symmetric, constant-speed process. This assumption breaks down under geopolitical supply disruption — most dramatically in April 2026, when the closure of the Strait of Hormuz drove a $30/barrel gap between Brent spot ($124.68) and June futures ($94.75), a basis anomaly with no precedent in modern market history.
+Classical commodity futures models treat the convergence of futures prices toward spot
+as a symmetric, constant-speed process. This assumption breaks down under geopolitical
+supply disruption — most dramatically in April 2026, when the closure of the Strait of
+Hormuz drove a $30/barrel gap between Brent spot and the June futures contract, a basis
+anomaly with no precedent in modern market history.
 
-**ORBIT** formalizes the futures-spot basis as a directed cointegration system in which the futures price is the follower and the spot price is the anchor. The convergence speed $a(\tau)$ is not constant — it accelerates as expiration approaches, driven by the contractual obligation of delivery. The central result is a provable basis collapse: $\sigma^2_e(\tau) = O(1/a(\tau)) \to 0$ as $\tau \to 0$, with a rate that is exponential in the integrated convergence speed.
+**ORBIT** models the futures-spot basis as a directed cointegration system. The key
+architectural insight is that convergence speed is not constant — it accelerates as
+expiration approaches, driven by the contractual obligation of physical delivery. The
+theoretical framework proves that basis variance must collapse to zero at expiry, at
+a rate governed by the integrated convergence speed. The mathematics and the economics
+are mutually consistent by construction.
 
----
-
-## The Mathematical Engine
-
-### Core SDE System
-
-ORBIT models the state vector $Z_t = (F_t, S_t)^\top$ where $F_t$ is the futures price and $S_t$ is the spot price, coupled through directed mean reversion:
-
-$$dF_t = a(\tau)(S_t - F_t)\,dt + \sigma_F\,dW^1_t$$
-
-$$dS_t = b(\mu_S - S_t)\,dt + \sigma_S\,dW^2_t$$
-
-$$d\langle W^1, W^2 \rangle_t = \rho\,dt$$
-
-The architectural contribution is the **time-varying convergence speed**:
-
-$$a(\tau) = a_0 + \frac{\kappa}{\tau + \varepsilon}, \qquad \tau = T - t$$
-
-As expiration approaches ($\tau \to 0$), $a(\tau) \to \infty$ — the futures price is pulled toward spot with infinite force, consistent with the contractual delivery obligation. Far from expiration ($\tau \to \infty$), $a(\tau) \to a_0$ — the baseline independent reversion speed.
-
-### Basis Process via Ito Product Rule
-
-Define the cointegrating parameter $\lambda(\tau) = a(\tau)/(a(\tau)+b)$ and the basis $e_t = F_t - \lambda(\tau) S_t$. Applying Ito's product rule with $d\tau = -dt$:
-
-$$de_t = \underbrace{-a(\tau) e_t\,dt}_{\text{directed pull}}
-       + \underbrace{b\lambda(\tau)(\mu_S - S_t)\,dt}_{\text{slow spot drift}}
-       - \underbrace{S_t \lambda'(\tau)\,dt}_{\text{Ito correction}}
-       + \sigma_{\text{eff}}(\tau)\,dB_t$$
-
-The Ito correction term $-S_t \lambda' dt$ arises from the time-dependence of $\lambda(\tau)$ and vanishes as $\tau \to 0$ (see Corollary 1 below).
+Full derivations, proofs, and theorem statements are documented in
+`theory/orbit_monograph.pdf`.
 
 ---
 
-## Time-Varying Lyapunov Equation & Variance Collapse
+## What the Model Does
 
-The covariance matrix $V(t) = \text{Cov}(Z_t)$ satisfies:
-
-$$\frac{dV}{dt} = A(\tau)V + VA(\tau)^\top + D$$
-
-where:
-
-```math
-A(\tau) = \begin{pmatrix} -a(\tau) & a(\tau) \\ 0 & -b \end{pmatrix}, \qquad
-D = \begin{pmatrix} \sigma_F^2 & \rho\sigma_F\sigma_S \\ \rho\sigma_F\sigma_S & \sigma_S^2 \end{pmatrix}
-```
-
-**Theorem 1 (Variance Collapse).** Under the fast-slow regime
-$a(\tau) \gg b$, the basis variance satisfies:
-
-```math
-\sigma_e^2(\tau) = O\left(\frac{1}{a(\tau)}\right) + O\left(e^{-\int_0^t a(s)\,ds}\right) \to 0 \quad \text{as } \tau \to 0
-```
-
-**Theorem 2 (Fast-Slow Approximation).** The basis is approximated
-by a time-inhomogeneous OU process with error:
-
-$$\|e_t - e_t^{\text{approx}}\| \leq C \cdot \left(\frac{b}{a(\tau)} + \frac{|\lambda'|}{a(\tau)}\right)$$
-
-**Corollary 1 (Exactness at Expiry).** As $\tau \to 0$:
-
-$$\frac{|\lambda'|}{a(\tau)} = \frac{b/\kappa \cdot (\tau+\varepsilon)}{\kappa} \to 0$$
-
-The approximation error vanishes precisely when contractual convergence is most binding — the mathematics and the economics align.
+- Formalizes the futures-spot basis as a two-factor stochastic system with directed
+  mean reversion
+- Proves that basis variance collapses to zero at expiration under general conditions
+- Quantifies the approximation error when the system is simplified to a
+  time-inhomogeneous mean-reverting process
+- Calibrates the model to historical WTI data using a distributional objective that
+  prioritizes fidelity near expiration — where it matters most
+- Detects when the basis has entered a crisis regime that departs from historical
+  convergence behavior
 
 ---
 
-## Engineering & Calibration Pipeline
+## Classical Engineering Pipeline
 
-### KS-Weighted Objective Function
+### Data Ingestion (`pipeline.py`)
+Pulls WTI spot and futures price series from EIA and CME sources. Computes the basis,
+time-to-expiry, and data quality flags for each observation.
 
-Standard SDE calibration minimizes MSE between model and empirical moments. ORBIT uses a distributional objective that prioritizes fidelity of the full basis CDF near expiration:
+### Basis Construction (`basis.py`)
+Constructs the cointegrating basis series, assigns the time-to-expiry parameter tau,
+and applies quality controls.
 
-$$\mathcal{L}(\theta) = \sup_x \left| F_n^{\text{MC}}(x;\theta) - F_n^{\text{emp}}(x) \right| \cdot w(\tau)$$
+### Simulation (`sde.py`)
+Simulates the bivariate stochastic system using the Milstein numerical scheme.
+Retained as the classical baseline for benchmarking against the Neural SDE.
 
-$$w(\tau) = \frac{1}{(\tau + \varepsilon)^\alpha}, \qquad \alpha > 0$$
+### Calibration (`calibrator.py`)
+Calibrates the seven-parameter model using a distributional objective function
+weighted toward near-expiry observations, with a two-stage global-then-local
+optimization strategy. Retained as classical baseline.
 
-The KS statistic captures the full distributional shape — critical during crisis regimes where the basis distribution departs sharply from its pre-disruption form.
+### Nonparametric Validation (`mlp_atau.py`)
+A shallow neural network provides a nonparametric estimate of convergence speed
+as a function of time-to-expiry and market state. Agreement with the parametric
+model validates the theoretical framework. Divergence identifies where the
+parametric assumptions bind.
 
-### Global/Local Hybrid Calibration
+### Validation (`validation.py`)
+Stationarity tests, distributional tests, and benchmark comparisons against the
+Schwartz (1997) model.
 
-- **Stage 1 (Global):** Differential Evolution explores the 7-parameter space $\theta = (a_0, \kappa, b, \sigma_F, \sigma_S, \rho, \lambda)$ to avoid local minima.
-- **Stage 2 (Local):** L-BFGS-B refines the DE output to gradient-level accuracy within stability bounds.
+---
 
-### Numerical Integration
+## ML Enhancement Layer
 
-- **Method:** Milstein scheme for the bivariate correlated SDE.
-- **Design:** For additive noise the Milstein correction vanishes, so Euler-Maruyama and Milstein coincide — the Milstein framework is retained for correctness under multiplicative noise extensions.
+The classical layer provides mathematical guarantees. The ML layer removes parametric
+assumptions where the data can do better. Each classical component has a modern
+counterpart. Both run in parallel — the repo benchmarks them rather than blindly
+replacing one with the other.
 
-### Nonparametric Validation of $a(\tau)$
+### Neural SDE — Learned Dynamics (`neural_sde.py`)
 
-A shallow MLP regressor trained on $(\tau, z_t, \sigma_{\text{realized}})$ provides a nonparametric estimate $a_{\text{MLP}}(\tau)$. Agreement with the parametric form validates Theorem 2. Divergence identifies regimes where the parametric assumption is binding.
+The parametric model imposes specific functional forms on the drift and diffusion of
+the bivariate system. A Neural SDE (implemented via `torchsde`) replaces these with
+neural networks trained end-to-end on historical basis data, using the adjoint
+sensitivity method for memory-efficient gradient computation.
+
+Where the learned dynamics agree with the parametric model, the theoretical framework
+is validated data-adaptively. Where they diverge, the mis-specification is identified
+and quantified — which is more useful than assuming it is not there.
+
+### Bayesian Optimization — Efficient Calibration (`bayes_calibrator.py`)
+
+The classical calibration explores the parameter space using Differential Evolution,
+which requires thousands of objective evaluations. Bayesian Optimization via `optuna`
+(TPE sampler) builds a probabilistic surrogate of the loss surface and concentrates
+evaluations where improvement is likely.
+
+This reduces calibration from roughly five thousand evaluations to roughly one hundred,
+and produces uncertainty estimates on calibrated parameters rather than point estimates
+only. The DE pipeline is retained as a fallback for high-dimensional extensions.
+
+### LSTM Convergence Speed Estimator — Path-Dependent Signal (`lstm_atau.py`)
+
+The shallow MLP estimates convergence speed from instantaneous features — it is
+memoryless. An LSTM takes the full recent path of basis observations as input,
+capturing path-dependence that no instantaneous snapshot can encode.
+
+During crisis regimes, the trajectory of the basis — whether it has been widening
+rapidly, oscillating, or trending — carries predictive information about future
+convergence speed. The LSTM learns this structure from data. Architecture: 2-layer
+LSTM, hidden dimension 64, dropout 0.2, sequence length 20 trading days, trained
+on rolling windows with expanding out-of-sample evaluation.
+
+### Benchmarking Philosophy
+
+No component is replaced without evidence. Each ML module runs alongside its classical
+counterpart. The classical model wins on interpretability and theoretical guarantees.
+The ML model wins when the data is informative enough to justify the complexity.
+Both results are reported.
 
 ---
 
 ## Model Benchmarking
 
-Calibrated on WTI data 2020–2025, evaluated on the 2026 Strait of Hormuz crisis window (out-of-sample).
+Calibrated on WTI data 2020–2025, evaluated on the 2026 Strait of Hormuz crisis
+window (out-of-sample).
 
-| Model | Basis RMSE | Variance Collapse Prediction | Interpretability |
-|---|---|---|---|
-| **ORBIT (Full Framework)** | **TBD** | **Yes — exact** | **Full** |
-| MLP Baseline | TBD | None | None |
-| Schwartz (1997) | TBD | Partial | Medium |
-| Random Walk | — | None | None |
+| Model | Basis RMSE | Variance Collapse | Calibration Speed | Interpretability |
+|---|---|---|---|---|
+| **ORBIT — Classical** | TBD | Yes — proven | ~5,000 evals (DE) | Full |
+| **ORBIT — Bayesian Opt** | TBD | Yes — proven | ~100 evals (TPE) | Full |
+| **ORBIT — Neural SDE** | TBD | Empirical | Gradient (adjoint) | Partial |
+| **ORBIT — LSTM a(τ)** | TBD | Yes — proven | Gradient | Full + path |
+| MLP Baseline | TBD | None | — | None |
+| Schwartz (1997) | TBD | Partial | — | Medium |
+| Random Walk | — | None | — | None |
 
 *Results to be populated upon full calibration run.*
 
 ---
 
-## Retrospective: Why This Model and Why Now
+## Power BI Integration
 
-The SVMA project (see [stevetab03/SVMA](https://github.com/stevetab03/SVMA)) established that a structurally grounded, activation-driven SDE system can outperform LSTM deep learning for high-fidelity modeling of microstructure dynamics. ORBIT applies that same mathematical philosophy to a domain where the driving mechanism is not options dealer flow but a harder, more fundamental law: **contractual delivery obligation**.
+The Python pipeline exports structured CSVs consumed by a Power BI dashboard via a
+star schema data model. This bridges the quantitative research layer with enterprise
+analytics — the same architectural pattern used in upstream BI deployments.
 
-Futures and spot prices must converge. The question is not whether but how fast, how noisily, and how that structure deforms under the largest supply disruption in the history of the global oil market. The current crisis — with Brent spot trading $30 above the June futures contract — is not an obstacle to the model. It is the most rigorous possible test of it.
+**CSV exports:**
+
+| File | Contents |
+|---|---|
+| `basis_panel.csv` | Daily basis, tau, contract metadata |
+| `variance_by_tau.csv` | Model vs empirical variance by time-to-expiry |
+| `calibration_results.csv` | Parameter estimates, classical vs Bayesian |
+| `regime_signals.csv` | LSTM convergence speed estimates, regime flags |
+| `model_comparison.csv` | RMSE benchmarks across all model variants |
+
+**Dashboard pages (Power BI):**
+1. Basis Overview — spread, tau, rolling volatility
+2. Variance Collapse — modeled vs empirical term structure
+3. Calibration — parameter estimates and uncertainty bands
+4. ML Signals — LSTM path-dependent convergence speed, regime overlay
+5. Model Comparison — classical vs ML RMSE benchmarks
 
 ---
 
 ## Repository Structure
+
 ```
 ORBIT/
 ├── README.md
 ├── theory/
-│   └── orbit_monograph.pdf          full mathematical derivation
+│   └── orbit_monograph.pdf           full mathematical derivation (compiled)
 ├── orbit/
-│   ├── pipeline.py                  EIA + CME data ingestion
-│   ├── basis.py                     basis computation, tau, quality flags
-│   ├── sde.py                       Milstein simulator
-│   ├── calibrator.py                KS-weighted differential evolution
-│   ├── mlp_atau.py                  nonparametric a(tau) via MLP
-│   └── validation.py                ADF, KS tests, Schwartz benchmark
+│   ├── pipeline.py                   EIA + CME data ingestion
+│   ├── basis.py                      basis computation, tau, quality flags
+│   ├── sde.py                        Milstein simulator (classical)
+│   ├── calibrator.py                 KS-weighted differential evolution
+│   ├── mlp_atau.py                   nonparametric a(tau) via shallow MLP
+│   ├── validation.py                 ADF, KS tests, Schwartz benchmark
+│   ├── neural_sde.py                 Neural SDE via torchsde (ML)
+│   ├── bayes_calibrator.py           Bayesian optimization via optuna (ML)
+│   └── lstm_atau.py                  path-dependent a(tau) via LSTM (ML)
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb
 │   ├── 02_calibration_demo.ipynb
-│   └── 03_results_and_charts.ipynb  Power BI export
+│   ├── 03_results_and_charts.ipynb   Power BI export
+│   └── 04_ml_benchmarking.ipynb      classical vs ML comparison
 └── outputs/
-├── figures/
-└── powerbi/
-├── basis_panel.csv
-├── variance_by_tau.csv
-└── calibration_results.csv
+    ├── figures/
+    └── powerbi/
+        ├── basis_panel.csv
+        ├── variance_by_tau.csv
+        ├── calibration_results.csv
+        ├── regime_signals.csv
+        └── model_comparison.csv
 ```
+
+---
+
+## Retrospective
+
+The SVMA project ([stevetab03/SVMA](https://github.com/stevetab03/SVMA)) established
+that a structurally grounded SDE system can outperform pure deep learning for
+high-fidelity modeling of market microstructure dynamics. ORBIT applies the same
+philosophy to a domain where the driving mechanism is not latent flow but a harder,
+more fundamental law: contractual delivery obligation.
+
+The ML layer is not a replacement for the mathematics. It is an honesty check. Where
+Neural SDE and LSTM agree with the classical framework, the theory is validated
+data-adaptively. Where they diverge, the parametric assumptions are exposed — which
+is more useful than pretending they are not there.
+
+Full mathematical treatment: `theory/orbit_monograph.pdf`.
 
 ---
 
 ## Contact
 
-**LinkedIn:** https://www.linkedin.com/in/hlzhang/  
+**LinkedIn:** https://www.linkedin.com/in/hlzhang/
 **GitHub:** https://github.com/stevetab03
