@@ -7,7 +7,7 @@
 [![BI: Power BI](https://img.shields.io/badge/BI-Power_BI-yellow)](https://github.com/stevetab03/ORBIT)
 
 **Author:** Liyuan Zhang  
-**Status:** Active Research / Portfolio Showcase
+**Status:** Active Research & Development / Portfolio Showcase
 
 ---
 
